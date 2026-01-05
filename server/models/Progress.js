@@ -19,6 +19,23 @@ const progressSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        difficultyBreakdown: {
+            easy: {
+                attempts: { type: Number, default: 0 },
+                correct: { type: Number, default: 0 },
+            },
+            medium: {
+                attempts: { type: Number, default: 0 },
+                correct: { type: Number, default: 0 },
+            },
+            hard: {
+                attempts: { type: Number, default: 0 },
+                correct: { type: Number, default: 0 },
+            },
+        },
+        lastAttemptedAt: {
+            type: Date,
+        },
     },
     { timestamps: true }
 );

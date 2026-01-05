@@ -22,6 +22,30 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    bookmarkedQuestions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Question",
+      },
+    ],
+    attemptedQuestions: [
+      {
+        questionId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Question",
+        },
+        isCorrect: Boolean,
+        attemptedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    roleRequestStatus: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none",
+    },
   },
   { timestamps: true }
 );

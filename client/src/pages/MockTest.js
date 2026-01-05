@@ -1,112 +1,302 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Layout from "../components/Layout";
+import Timer from "../components/Timer";
+import QuestionCard from "../components/QuestionCard";
+import LoadingSpinner from "../components/LoadingSpinner";
 import API from "../services/api";
+import "./MockTest.css";
 
 const MockTest = () => {
-    const [questions, setQuestions] = useState([]);
-    const [current, setCurrent] = useState(0);
+    const navigate = useNavigate();
+    const [testConfig, setTestConfig] = useState({
+        topic: "All",
+        difficulty: "All",
+        questionCount: 10,
+        duration: 30,
+    });
+    const [test, setTest] = useState(null);
+    const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState([]);
-    const [selected, setSelected] = useState("");
-    const [submitted, setSubmitted] = useState(false);
-    const [score, setScore] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [showingResults, setShowingResults] = useState(false);
+    const [results, setResults] = useState(null);
+    const [startTime, setStartTime] = useState(null);
 
-    useEffect(() => {
-        const startTest = async () => {
-            try {
-                const res = await API.get("/tests/start");
-                setQuestions(res.data);
-            } catch (error) {
-                alert("Failed to start test");
-            }
-        };
-
-        startTest();
-    }, []);
-
-    if (questions.length === 0) {
-        return <h3>Loading mock test...</h3>;
-    }
-
-    const question = questions[current];
-
-    const nextQuestion = () => {
-        setAnswers([
-            ...answers,
-            {
-                questionId: question._id,
-                selectedAnswer: selected,
-                correctAnswer: question.correctAnswer,
-                topic: question.topic,
-            },
-        ]);
-
-        setSelected("");
-        setCurrent(current + 1);
-    };
-
-    const submitTest = async () => {
-        const finalAnswers = [
-            ...answers,
-            {
-                questionId: question._id,
-                selectedAnswer: selected,
-                correctAnswer: question.correctAnswer,
-                topic: question.topic,
-            },
-        ];
-
+    const startTest = async () => {
+        setLoading(true);
         try {
-            const res = await API.post("/tests/submit", {
-                answers: finalAnswers,
-                timeTaken: 120,
-            });
-
-            setScore(res.data.score);
-            setSubmitted(true);
+            const res = await API.post("/tests/create", testConfig);
+            setTest(res.data);
+            setAnswers(new Array(res.data.questions.length).fill(""));
+            setStartTime(Date.now());
         } catch (error) {
-            alert("Failed to submit test");
+            const errorMsg = error.response?.data?.message || "Failed to start test";
+            if (errorMsg.includes("No questions found")) {
+                alert(
+                    `No questions available for the selected criteria.\n\n` +
+                    `Topic: ${testConfig.topic}\n` +
+                    `Difficulty: ${testConfig.difficulty}\n\n` +
+                    `Please try different settings or contact admin to add more questions.`
+                );
+            } else {
+                alert(`Failed to start test: ${errorMsg}`);
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
-    if (submitted) {
+    const handleAnswerSelect = (answer) => {
+        const newAnswers = [...answers];
+        newAnswers[currentIndex] = answer;
+        setAnswers(newAnswers);
+    };
+
+    const handleSubmit = async () => {
+        if (!window.confirm("Are you sure you want to submit the test?")) {
+            return;
+        }
+
+        setLoading(true);
+        const timeTaken = Math.floor((Date.now() - startTime) / 1000); // in seconds
+
+        try {
+            const res = await API.post(`/tests/${test.testId}/submit`, {
+                answers,
+                timeTaken,
+            });
+            setResults(res.data);
+            setShowingResults(true);
+        } catch (error) {
+            alert("Failed to submit test");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleTimeUp = () => {
+        alert("Time's up! Submitting your test...");
+        handleSubmit();
+    };
+
+    const navigateQuestion = (index) => {
+        setCurrentIndex(index);
+    };
+
+    // Configuration Phase
+    if (!test && !showingResults) {
         return (
-            <div style={{ padding: "40px" }}>
-                <h2>Mock Test Completed 🎉</h2>
-                <h3>Your Score: {score}</h3>
-            </div>
+            <Layout title="Mock Test">
+                <div className="test-config-card">
+                    <h2>Configure Your Test</h2>
+                    <p className="text-muted">
+                        Customize your mock test settings below
+                    </p>
+
+                    <div className="config-form">
+                        <div className="form-group">
+                            <label className="form-label">Topic</label>
+                            <select
+                                value={testConfig.topic}
+                                onChange={(e) =>
+                                    setTestConfig({
+                                        ...testConfig,
+                                        topic: e.target.value,
+                                    })
+                                }
+                            >
+                                <option value="All">All Topics</option>
+                                <option value="DSA">DSA</option>
+                                <option value="Java">Java</option>
+                                <option value="JavaScript">JavaScript</option>
+                                <option value="SQL">SQL</option>
+                                <option value="HR">HR</option>
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Difficulty</label>
+                            <select
+                                value={testConfig.difficulty}
+                                onChange={(e) =>
+                                    setTestConfig({
+                                        ...testConfig,
+                                        difficulty: e.target.value,
+                                    })
+                                }
+                            >
+                                <option value="All">All Levels</option>
+                                <option value="Easy">Easy</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Number of Questions</label>
+                            <input
+                                type="number"
+                                min="5"
+                                max="50"
+                                value={testConfig.questionCount}
+                                onChange={(e) =>
+                                    setTestConfig({
+                                        ...testConfig,
+                                        questionCount: parseInt(e.target.value),
+                                    })
+                                }
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Duration (minutes)</label>
+                            <input
+                                type="number"
+                                min="10"
+                                max="120"
+                                value={testConfig.duration}
+                                onChange={(e) =>
+                                    setTestConfig({
+                                        ...testConfig,
+                                        duration: parseInt(e.target.value),
+                                    })
+                                }
+                            />
+                        </div>
+
+                        <button
+                            className="btn btn-primary btn-lg w-full"
+                            onClick={startTest}
+                            disabled={loading}
+                        >
+                            {loading ? "Starting Test..." : "Start Test"}
+                        </button>
+                    </div>
+                </div>
+            </Layout>
         );
     }
 
-    return (
-        <div style={{ padding: "40px" }}>
-            <h2>Mock Test</h2>
+    // Results Phase
+    if (showingResults && results) {
+        return (
+            <Layout title="Test Results">
+                <div className="results-card">
+                    <div className="results-header">
+                        <h2>Test Completed! 🎉</h2>
+                        <div className="score-display">
+                            <div className="score-circle">
+                                <div className="score-value">{results.percentage}%</div>
+                            </div>
+                            <div className="score-details">
+                                <p>
+                                    Score: {results.score} / {results.totalMarks}
+                                </p>
+                                <p>
+                                    Time Taken: {Math.floor(results.timeTaken / 60)}m{" "}
+                                    {results.timeTaken % 60}s
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
-            <h3>{question.title}</h3>
-
-            {question.options.map((opt, index) => (
-                <div key={index}>
-                    <input
-                        type="radio"
-                        name="option"
-                        value={opt}
-                        checked={selected === opt}
-                        onChange={() => setSelected(opt)}
-                    />
-                    {opt}
+                    <div className="results-actions">
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => navigate("/analytics")}
+                        >
+                            View Analytics
+                        </button>
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => window.location.reload()}
+                        >
+                            Take Another Test
+                        </button>
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => navigate("/dashboard")}
+                        >
+                            Back to Dashboard
+                        </button>
+                    </div>
                 </div>
-            ))}
+            </Layout>
+        );
+    }
 
-            <br />
+    // Test Phase
+    if (loading) {
+        return (
+            <Layout title="Mock Test">
+                <LoadingSpinner message="Loading test..." />
+            </Layout>
+        );
+    }
 
-            {current < questions.length - 1 ? (
-                <button onClick={nextQuestion} disabled={!selected}>
-                    Next
+    const currentQuestion = test.questions[currentIndex];
+
+    return (
+        <Layout title="Mock Test">
+            {/* Test Header */}
+            <div className="test-header">
+                <Timer
+                    duration={test.duration * 60}
+                    onTimeUp={handleTimeUp}
+                    isActive={!showingResults}
+                />
+                <div className="test-progress">
+                    Question {currentIndex + 1} / {test.questions.length}
+                </div>
+            </div>
+
+            {/* Question Navigator */}
+            <div className="question-navigator">
+                {test.questions.map((_, index) => (
+                    <button
+                        key={index}
+                        className={`nav-btn ${index === currentIndex ? "active" : ""} ${answers[index] ? "answered" : ""
+                            }`}
+                        onClick={() => navigateQuestion(index)}
+                    >
+                        {index + 1}
+                    </button>
+                ))}
+            </div>
+
+            {/* Current Question */}
+            <QuestionCard
+                question={currentQuestion}
+                selectedAnswer={answers[currentIndex]}
+                onSelectAnswer={handleAnswerSelect}
+                showAnswer={false}
+            />
+
+            {/* Navigation Buttons */}
+            <div className="nav-buttons">
+                <button
+                    className="btn btn-secondary"
+                    onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
+                    disabled={currentIndex === 0}
+                >
+                    ← Previous
                 </button>
-            ) : (
-                <button onClick={submitTest} disabled={!selected}>
-                    Submit Test
-                </button>
-            )}
-        </div>
+
+                {currentIndex < test.questions.length - 1 ? (
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => setCurrentIndex(currentIndex + 1)}
+                    >
+                        Next →
+                    </button>
+                ) : (
+                    <button className="btn btn-success" onClick={handleSubmit}>
+                        Submit Test
+                    </button>
+                )}
+            </div>
+        </Layout>
     );
 };
 

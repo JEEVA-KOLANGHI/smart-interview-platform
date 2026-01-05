@@ -1,0 +1,70 @@
+.timer {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    background: white;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-md);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.timer-icon {
+    font-size: 1.5rem;
+}
+
+.timer-display {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.timer-separator {
+    margin: 0 0.25rem;
+    animation: blink 1s ease-in-out infinite;
+}
+
+.timer.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 2px solid var(--warning);
+}
+
+.timer.warning .timer-display {
+    color: var(--warning);
+}
+
+.timer.critical {
+    background: rgba(239, 68, 68, 0.1);
+    border: 2px solid var(--danger);
+    animation: pulse 0.5s ease-in-out infinite;
+}
+
+.timer.critical .timer-display {
+    color: var(--danger);
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}

@@ -7,6 +7,35 @@ const testSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
+        testType: {
+            type: String,
+            enum: ["topic-based", "difficulty-based", "mixed"],
+            default: "mixed",
+        },
+        topic: {
+            type: String,
+            enum: ["DSA", "Java", "JavaScript", "SQL", "HR", "All"],
+            default: "All",
+        },
+        difficulty: {
+            type: String,
+            enum: ["Easy", "Medium", "Hard", "All"],
+            default: "All",
+        },
+        duration: {
+            type: Number, // in minutes
+            default: 30,
+        },
+        startTime: {
+            type: Date,
+        },
+        submittedAt: {
+            type: Date,
+        },
+        isCompleted: {
+            type: Boolean,
+            default: false,
+        },
         questions: [
             {
                 questionId: {
@@ -15,11 +44,13 @@ const testSchema = new mongoose.Schema(
                 },
                 selectedAnswer: String,
                 correctAnswer: String,
+                isCorrect: Boolean,
+                topic: String,
             },
         ],
         score: Number,
         totalMarks: Number,
-        timeTaken: Number,
+        timeTaken: Number, // in seconds
     },
     { timestamps: true }
 );

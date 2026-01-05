@@ -1,10 +1,23 @@
 const express = require("express");
-const { startTest, submitTest } = require("../controllers/testController");
+const router = express.Router();
+const {
+    createTest,
+    getActiveTest,
+    submitTest,
+    getTestResults,
+    getTestHistory,
+    startTest,
+} = require("../controllers/testController");
 const protect = require("../middleware/authMiddleware");
 
-const router = express.Router();
+// All routes are protected (user only)
+router.post("/create", protect, createTest);
+router.get("/active", protect, getActiveTest);
+router.post("/:testId/submit", protect, submitTest);
+router.get("/:testId/results", protect, getTestResults);
+router.get("/history", protect, getTestHistory);
 
+// Legacy endpoint
 router.get("/start", protect, startTest);
-router.post("/submit", protect, submitTest);
 
 module.exports = router;

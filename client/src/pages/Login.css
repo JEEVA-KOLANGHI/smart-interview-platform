@@ -1,0 +1,71 @@
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: var(--spacing-lg);
+}
+
+.login-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    max-width: 450px;
+    width: 100%;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.login-header {
+    padding: var(--spacing-2xl) var(--spacing-2xl) var(--spacing-lg);
+    text-align: center;
+}
+
+.login-header h1 {
+    color: var(--primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.login-header p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.login-tabs {
+    display: flex;
+    padding: 0 var(--spacing-2xl);
+    gap: var(--spacing-sm);
+    border-bottom: 2px solid var(--gray-100);
+}
+
+.tab {
+    flex: 1;
+    padding: var(--spacing-md);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.login-form {
+    padding: var(--spacing-2xl);
+}
+
+@media (max-width: 768px) {
+    .login-container {
+        padding: var(--spacing-md);
+    }
+
+    .login-card {
+        max-width: 100%;
+    }
+}
